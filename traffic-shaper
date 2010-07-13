@@ -42,14 +42,15 @@ echo "Reserving $INTERACTIVE_RATE for interactive sessions and other traffic."
 $TC qdisc add dev $IF root handle 1: htb default 10
 $TC class add dev $IF parent 1: classid 1:1 htb rate ${HTTP_RATE} ceil ${RATE}
 
+#$TC class add dev $IF parent 1:1 classid 1:10 htb rate ${RATE} ceil ${RATE}
 $TC class add dev $IF parent 1:1 classid 1:10 htb rate ${HTTP_RATE} ceil ${RATE}
 #$TC class add dev $IF parent 1:1 classid 1:20 htb rate 100Mbit ceil ${RATE}
-#$TC class add dev $IF parent 1:1 classid 1:50 htb rate 500kbit ceil ${RATE}
+##$TC class add dev $IF parent 1:1 classid 1:50 htb rate 500kbit ceil ${RATE}
 $TC class add dev $IF parent 1:1 classid 1:90 htb rate ${INTERACTIVE_RATE} ceil ${RATE}
 
 $TC qdisc add dev $IF parent 1:10 handle 10: sfq perturb 10
 #$TC qdisc add dev $IF parent 1:20 handle 20: sfq perturb 10
-#$TC qdisc add dev $IF parent 1:50 handle 50: sfq perturb 10
+##$TC qdisc add dev $IF parent 1:50 handle 50: sfq perturb 10
 $TC qdisc add dev $IF parent 1:90 handle 90: sfq perturb 10
 
 #$TC filter add dev $IF parent 1:0 protocol ip u32 match ip sport $HTTP_PORT 0xffff classid 1:10

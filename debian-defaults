@@ -6,8 +6,8 @@
 RATE=1000Mbit
 
 # Max allowed rate overall (rename to LIMIT?)
-HTTP_RATE=550Mbit
-#LIMIT=550Mbit
+HTTP_RATE=800Mbit
+#LIMIT=800Mbit
 
 HTTP_PORT=80
 INTERACTIVE_RATE=10Mbit

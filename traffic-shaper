@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# Set up bandwidth limiting for an interface / service
+# Based on 'tc'
+#
+# Defaults can be overridden by /etc/default/traffic-shaper
+#
+# Cosimo, 2010/07/13
+#
+
+TC=/sbin/tc
+
+test -f /etc/default/traffic-shaper && . /etc/default/traffic-shaper
+
+IF=${IF:-eth0}
+RATE=${RATE:-100Mbit}
+HTTP_RATE=${HTTP_RATE:-50Mbit}
+HTTP_PORT=${HTTP_PORT:-80}
+HTTPS_PORT=${HTTPS_PORT:-443}
+INTERACTIVE_RATE=${INTERACTIVE_RATE:-500kbit}
+
+echo "[$IF] HTTP (:$HTTP_PORT) rate=$HTTP_RATE/$RATE"
+echo "[$IF] Interactive rate=$INTERACTIVE_RATE"
+
+#exit
+
+if [ "x$1" = "xstop" ]; then
+	echo 'Stopping traffic shaper...'
+	$TC qdisc del dev $IF root >/dev/null 2>&1 && echo 'Done'
+	exit
+elif [ "x$1" = "xshow" ]; then
+	$TC qdisc show dev $IF
+	exit
+elif [ "x$1" = "xstats" ]; then
+	$TC -d -s qdisc show dev $IF
+	exit
+fi
+
+echo "Traffic shaping setup ($HTTP_RATE/$RATE) on port $HTTP_PORT."
+echo "Reserving $INTERACTIVE_RATE for interactive sessions and other traffic."
+
+$TC qdisc add dev $IF root handle 1: htb default 10
+$TC class add dev $IF parent 1: classid 1:1 htb rate ${HTTP_RATE} ceil ${RATE}
+
+$TC class add dev $IF parent 1:1 classid 1:10 htb rate ${HTTP_RATE} ceil ${RATE}
+#$TC class add dev $IF parent 1:1 classid 1:20 htb rate 100Mbit ceil ${RATE}
+#$TC class add dev $IF parent 1:1 classid 1:50 htb rate 500kbit ceil ${RATE}
+$TC class add dev $IF parent 1:1 classid 1:90 htb rate ${INTERACTIVE_RATE} ceil ${RATE}
+
+$TC qdisc add dev $IF parent 1:10 handle 10: sfq perturb 10
+#$TC qdisc add dev $IF parent 1:20 handle 20: sfq perturb 10
+#$TC qdisc add dev $IF parent 1:50 handle 50: sfq perturb 10
+$TC qdisc add dev $IF parent 1:90 handle 90: sfq perturb 10
+
+#$TC filter add dev $IF parent 1:0 protocol ip u32 match ip sport $HTTP_PORT 0xffff classid 1:10
+#$TC filter add dev $IF parent 1:0 protocol ip u32 match ip sport $HTTPS_PORT 0xffff classid 1:20
+$TC filter add dev $IF parent 1:0 protocol ip u32 match ip sport 22 0xffff match ip dport 22 0xffff classid 1:90
+##$TC filter add dev $IF parent 1:0 protocol ip u32 match ip sport 25 0xffff classid 1:50
+##$TC filter add dev $IF parent 1:0 protocol ip u32 match ip sport 110 0xffff classid 1:50
+

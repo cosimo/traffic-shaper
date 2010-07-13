@@ -1,0 +1,10 @@
+A basic bandwidth limiting example that uses 'tc'
+to perform traffic shaping.
+
+In theory, it should save some bandwidth just for
+interactive sessions, ssh, ftp, etc... and limit
+HTTP usage, but I couldn't get it working on
+the production machine, just on my workstation.
+
+Cosimo, 2010/07/13
+

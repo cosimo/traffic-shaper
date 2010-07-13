@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Set up bandwidth limiting for an interface / service
 # Based on 'tc'
